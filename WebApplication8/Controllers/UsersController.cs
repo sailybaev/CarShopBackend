@@ -29,6 +29,8 @@ public class UsersController : ControllerBase
             Role = dto.Role
         };
         _users.Add(user);
+        
+        
         return Ok(user);
     }
 
@@ -40,5 +42,11 @@ public class UsersController : ControllerBase
 
         var token = TokenService.GenerateToken(user);
         return Ok(token);
+    }
+
+    [HttpGet("all")]
+    public ActionResult<List<User>> GetAllUsers()
+    {
+        return Ok(_users);
     }
 }
