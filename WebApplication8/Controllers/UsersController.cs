@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebApplication8.Models;
 using WebApplication8.DTOs;
 using WebApplication8.Services;
+using WebApplication8.Data;
 
 namespace WebApplication8.Controllers;
 
@@ -9,33 +11,39 @@ namespace WebApplication8.Controllers;
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    private static List<User> _users = new();
-    private static int _idCounter = 1;
+    private readonly ApplicationDbContext _context;
+
+    public UsersController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
 
     [HttpPost("register")]
-    public ActionResult<User> Register([FromBody] UserRegisterDTO dto)
+    public async Task<ActionResult<User>> Register([FromBody] UserRegisterDTO dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        if (_users.Any(u => u.Username == dto.Username))
+        if (await _context.Users.AnyAsync(u => u.Username == dto.Username))
             return BadRequest("Username already exists.");
 
         var user = new User
         {
-            Id = _idCounter++,
             Username = dto.Username,
             Password = dto.Password,
             Role = dto.Role
         };
-        _users.Add(user);
+        
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+        
         return Ok(user);
     }
 
     [HttpPost("login")]
-    public ActionResult<string> Login([FromBody] UserLoginDTO dto)
+    public async Task<ActionResult<string>> Login([FromBody] UserLoginDTO dto)
     {
-        var user = _users.FirstOrDefault(u => u.Username == dto.Username && u.Password == dto.Password);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == dto.Username && u.Password == dto.Password);
         if (user == null) return Unauthorized("Invalid credentials.");
 
         var token = TokenService.GenerateToken(user);

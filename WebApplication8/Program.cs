@@ -2,8 +2,14 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using WebApplication8.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// PostgreSQL DbContext configuration
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // JWT setup
 var key = "MySuperSuperLongSecretKey12345678901234567890!"; // тот же ключ, что в TokenService

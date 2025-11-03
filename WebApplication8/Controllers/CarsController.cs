@@ -1,47 +1,55 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using WebApplication8.Models;
 using WebApplication8.DTOs;
+using WebApplication8.Data;
 
-namespace CarShopApi.Controllers;
+namespace WebApplication8.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 public class CarsController : ControllerBase
 {
-    private static List<Car> _cars = new();
-    private static int _idCounter = 1;
+    private readonly ApplicationDbContext _context;
+
+    public CarsController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet]
     [Authorize] // любой авторизованный пользователь
-    public ActionResult<List<Car>> GetAll() => _cars;
+    public async Task<ActionResult<List<Car>>> GetAll() => await _context.Cars.ToListAsync();
 
     [HttpGet("{id}")]
     [Authorize]
-    public ActionResult<Car> GetById(int id)
+    public async Task<ActionResult<Car>> GetById(int id)
     {
-        var car = _cars.FirstOrDefault(c => c.Id == id);
+        var car = await _context.Cars.FindAsync(id);
         if (car == null) return NotFound();
         return car;
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")] // только Admin
-    public ActionResult<Car> Create([FromBody] CarDTO dto)
+    public async Task<ActionResult<Car>> Create([FromBody] CarDTO dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
         var car = new Car
         {
-            Id = _idCounter++,
             Brand = dto.Brand,
             Model = dto.Model,
             Year = dto.Year,
             Price = dto.Price
         };
-        _cars.Add(car);
+        
+        _context.Cars.Add(car);
+        await _context.SaveChangesAsync();
+        
         return CreatedAtAction(nameof(GetById), new { id = car.Id }, car);
     }
 
@@ -54,15 +62,14 @@ public class CarsController : ControllerBase
         return Ok(new { username, role });
     }
 
-    
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public ActionResult Update(int id, [FromBody] CarDTO dto)
+    public async Task<ActionResult> Update(int id, [FromBody] CarDTO dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var car = _cars.FirstOrDefault(c => c.Id == id);
+        var car = await _context.Cars.FindAsync(id);
         if (car == null) return NotFound();
 
         car.Brand = dto.Brand;
@@ -70,17 +77,19 @@ public class CarsController : ControllerBase
         car.Year = dto.Year;
         car.Price = dto.Price;
 
+        await _context.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public ActionResult Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
-        var car = _cars.FirstOrDefault(c => c.Id == id);
+        var car = await _context.Cars.FindAsync(id);
         if (car == null) return NotFound();
 
-        _cars.Remove(car);
+        _context.Cars.Remove(car);
+        await _context.SaveChangesAsync();
         return NoContent();
     }
 }
