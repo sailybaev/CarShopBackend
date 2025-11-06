@@ -37,6 +37,7 @@ public class UsersController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
         
+        
         return Ok(user);
     }
 
