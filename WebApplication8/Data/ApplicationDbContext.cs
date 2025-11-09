@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Car> Cars { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Orders> Orders { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

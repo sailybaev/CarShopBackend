@@ -4,12 +4,17 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using WebApplication8.Data;
+using WebApplication8.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // PostgreSQL DbContext configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register GeminiService
+builder.Services.AddHttpClient<GeminiService>();
+builder.Services.AddScoped<GeminiService>();
 
 // JWT setup
 var key = "MySuperSuperLongSecretKey12345678901234567890!"; // тот же ключ, что в TokenService
